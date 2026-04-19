@@ -1,0 +1,43 @@
+#######
+# STUPID HACK: execute as root
+chown -R postgres:root /usr/lib/postgresql/17/
+chown -R postgres:root /usr/share/postgresql/17/
+#
+#######
+# as root
+apt update && apt upgrade -y
+apt install -y bison flex libreadline-dev zlib1g-dev
+#######
+# execute as postgres
+su - postgres
+
+# choose 'default' profile
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# exit back into root and again sudo as postgres
+exit
+su - postgres
+
+cargo install --version '=0.16.1' --locked cargo-pgrx && \
+cargo pgrx init --pg17 pg_config
+
+git clone https://github.com/timescale/timescaledb-toolkit
+
+cd timescaledb-toolkit/extension && \
+cargo pgrx install --release && \
+cargo run --manifest-path ../tools/post-install/Cargo.toml -- pg_config
+
+#######
+# STUPID HACK, secure permissions: execute as root
+chown -R root:root /usr/lib/postgresql/17/
+chown -R root:root /usr/share/postgresql/17/
+#
+#######
+
+##################################################################
+# IN THE DATABASE!
+#
+# CREATE EXTENSION timescaledb_toolkit;
+# select * from pg_available_extensions() order by 1,2;
+#
+##################################################################

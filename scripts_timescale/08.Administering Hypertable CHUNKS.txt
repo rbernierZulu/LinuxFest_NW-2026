@@ -1,0 +1,77 @@
+
+================================================================
+# DATA POPULATION
+
+\dt+ _timescaledb_internal.*_hyper_*
+\di+ _timescaledb_internal.*_hyper_*
+
+\d _timescaledb_internal._hyper_1_1_chunk
+================================================================
+# COMPRESSING A CHUNK
+
+\dt+ _timescaledb_internal._hyper*chunk
+
+-- ENABLE COMPRESSION
+alter table t_timescale
+    set (timescaledb.compress,
+         timescaledb.compress_orderby = 't_stamp asc');
+
+\timing
+select * from compress_chunk('_timescaledb_internal._hyper_1_3_chunk',true);
+\timing
+
+
+\dt+ _timescaledb_internal._hyper*chunk
+
+-- Get Current State of Compression
+\x
+select * from hypertable_compression_stats('t_timescale');
+\x
+
+================================================================
+# DECOMPRESSING A CHUNK
+
+-- Decompressing Chunk
+\timing
+select * from decompress_chunk('_timescaledb_internal._hyper_1_3_chunk');
+\timing
+
+\dt+ _timescaledb_internal._hyper*chunk
+
+====================================================================
+Setting A Chunk Compression Policy
+
+-- recall
+alter table t_timescale
+    set (timescaledb.compress,
+         timescaledb.compress_orderby = 't_stamp asc');
+
+-- compresses "t_timescale" chunks that are older than 2 minutes
+select add_compression_policy('t_timescale', compress_after => INTERVAL '2m');
+
+-- validate compression policy, populate new records
+\timing
+insert into t_timescale(id) select gen_random_uuid() from generate_series (1, 2E7);
+\timing
+
+select * from pg_size_pretty(hypertable_size('t_timescale'));
+
+
+\dt+ _timescaledb_internal._hyper*chunk
+
+-- Let's check our stats
+\x
+select * from hypertable_compression_stats('t_timescale');
+\x
+
+-- disabling the compression policy is accomplished thusly:
+select remove_compression_policy('t_timescale');
+
+====================================================================
+# Chunk Runtime Parameters
+
+select name, setting
+    from pg_settings
+    where name ~ '^timescale'
+    and name ~ 'compress' or name ~ 'chunk';
+

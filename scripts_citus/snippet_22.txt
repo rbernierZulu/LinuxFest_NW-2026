@@ -1,0 +1,10 @@
+psql -h citus-coord pgbench <<_eof_
+    -- ADD REPLICA IDENTITY
+    alter table public.pgbench_history REPLICA IDENTITY FULL;
+
+    -- ADD Node
+    select citus_add_node('citus2', 5432);
+
+    -- REBALANCE shards across two nodes
+    select * from rebalance_table_shards();
+_eof_

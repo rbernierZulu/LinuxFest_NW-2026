@@ -1,0 +1,6 @@
+# execute the following on host citus-coord
+for u in citus1 citus2 citus3 citus4
+do
+    echo "==== $u ===="
+    psql -h $u -U postgres db01 -c "select tablename from pg_tables where tablename~'myevents2x' order by 1"
+done | less -S

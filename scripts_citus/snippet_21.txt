@@ -1,0 +1,9 @@
+# A 60 Second benchmark, wo indexes
+# execute the following on the coordinator node
+pgbench -h citus-coord -c 20 -j 3 -T 60 -P 3 pgbench
+
+
+
+# A 60 Second benchmark, with indexes
+# execute the following on the coordinator node
+pgbench -h citus-coord -c 20 -j 3 -T 60 -P 3 pgbench

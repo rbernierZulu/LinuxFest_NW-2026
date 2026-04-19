@@ -1,0 +1,39 @@
+drop table if not exists t1,t2;
+
+-- HEAP TABLE
+create table if not exists t1(id,qty) using heap as select (random()*10)::int,
+(random()*1000)::int from generate_series(1,10e6);
+
+-- COLUMNAR TABLE
+create table if not exists t2(id,qty) using columnar as select (random()*10)::int,
+(random()*1000)::int from generate_series(1,10e6);
+
+===========================================================
+
+-- HEAP TABLE, adding 5 million records
+do
+$$
+Begin for i in 5.1e6..10e6 loop
+insert into t1 values((random()*10)::int,(random()*1000)::int);
+end loop; end
+$$;
+
+-- COLUMNAR TABLE, adding 5 million records
+do
+$$
+Begin for i in 5.1e6..10e6 loop
+insert into t2 values((random()*10)::int,(random()*1000)::int);
+end loop; end
+$$;
+
+===========================================================
+
+-- HEAP TABLE
+create index on t1(id);
+
+-- COLUMNAR TABLE
+create index on t2(id);
+
+===========================================================
+
+

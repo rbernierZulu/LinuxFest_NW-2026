@@ -1,0 +1,30 @@
+-- HEAP TABLE
+explain analyze select id,qty from t1;
+
+-- COLUMNAR TABLE
+explain analyze select id,qty from t2;
+
+===========================================================
+
+-- HEAP TABLE
+explain analyze select id,qty from t1 order by random();
+
+-- COLUMNAR TABLE
+explain analyze select id,qty from t2 order by random();
+
+===========================================================
+
+-- HEAP TABLE
+explain analyze select sum(qty) from t1;
+
+explain analyze select sum(qty) from t2;
+
+===========================================================
+
+-- HEAP TABLE
+explain analyze select id,sum(qty) from t1 group by id;
+
+-- COLUMNAR TABLE
+explain analyze select id,sum(qty) from t2 group by id;
+
+===========================================================

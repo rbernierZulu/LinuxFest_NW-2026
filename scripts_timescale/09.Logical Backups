@@ -1,0 +1,101 @@
+
+
+#### LOGICAL DUMPS ####
+# Time: 17s
+time pg_dump -d ex02 -f db01.sql
+
+# Time: 45s
+time pg_dump -Fp -d ex02 -f - | pigz -> db01.pig.gz
+
+# Time: 1m
+time pg_dump -j 7 -Fd -d ex02 -f db01
+
+# Time: 4m+
+time pg_dump -Fc -d ex02 -f db01.db
+time pg_dump -Fp -d ex02 -f - | gzip -> db01.gz
+time pg_dump -Fp -d ex02 -f - | bzip2 -> db01.bz2
+#
+#### RESTORE ##########
+#
+---------------------
+dropdb --if-exists db01 && createdb db01
+---------------------
+
+# WORKS
+# Time: 1m20s
+time psql -1 -d db01 -f db01.sql
+
+# Time: 1m20s
+time pg_restore -Fd -d db01 db01
+
+# Time: 1m30s
+time pg_restore -d db01 db01.db
+
+# Time: 1m30s
+time pg_restore -f - db01.db | psql db01
+
+# Time: 1m30s
+time gunzip --stdout db01.pig.gz | psql -1 db01
+
+# FAILS: anything other than a single thread fails
+time pg_restore -j 4 -d db01 db01.db
+#
+
+#### CSV DUMPS AND UPLOADS ####
+#
+
+psql <<_eof_
+    drop database if exists db02;
+    create database db02;
+    \c db02
+
+    create extension timescaledb;
+
+    create table t_timescale(
+    id uuid
+    ,c2 int default random()*1E6
+    ,c3 int default random()*1E6
+    ,c4 int default random()*1E6
+    ,c5 int default random()*1E6
+    ,c6 int default random()*1E6
+    ,c7 int default random()*1E6
+    ,t_stamp timestamptz not null default clock_timestamp()
+    );
+
+    select create_hypertable('t_timescale', 't_stamp');
+    select * from set_chunk_time_interval('t_timescale',interval '1 minutes');
+_eof_
+
+#### CSV DUMP ####
+# Time: 1m45s
+time echo "copy (select * from t_timescale) to STDOUT with (format 'csv')" | psql ex02 > t_timescale.csv
+
+# Time: 1m30s
+time echo "copy (select * from t_timescale) to STDOUT with (format 'csv')" | psql ex02 | pigz -> t_timescale.pig.csv.gz
+
+# Time: 6m25s
+time echo "copy (select * from t_timescale) to STDOUT with (format 'csv')" | psql ex02 | gzip -> t_timescale.csv.gz
+
+
+#### CSV UPLOAD ####
+# Time: 7m50s
+time cat t_timescale.csv | psql db02 -c "copy t_timescale from STDIN with (format 'csv')"
+
+# Time: 4m30s
+time gunzip --stdout t_timescale.csv.gz | psql db02 -c "copy t_timescale from STDIN with (format 'csv')"
+
+# Time: 2m, # workers=2XCPU
+time timescaledb-parallel-copy \
+    --connection "host=/var/run/postgresql/ dbname=db02" \
+    --table t_timescale \
+    --file t_timescale.csv \
+    --workers 14 \
+    --reporting-period 30s
+
+# Time: 2m, using process substitution
+time timescaledb-parallel-copy \
+    --connection "host=/var/run/postgresql/ dbname=db02" \
+    --table t_timescale \
+    --file <(gunzip --stdout t_timescale.csv.gz) \
+    --workers 14 \
+    --reporting-period 30s

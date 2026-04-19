@@ -1,0 +1,52 @@
+
+
+=================================================================
+SELECT
+
+select show_chunks('t1');
+
+-- identify the constraints
+Table "_timescaledb_internal._hyper_1_1_chunk"
+    "constraint_1" CHECK (t_stamp >= '2024-05-09 00:00:00+00'::timestamp with time zone AND t_stamp < '2024-05-16 00:00:00+00'::timestamp with time zone)
+
+
+explain analyze
+select id,t_stamp
+    from t1
+    where t_stamp between '2024-05-09 00:00:00+00' and '2024-05-16';
+=================================================================
+UPDATE
+
+explain analyze
+update t1 set payload='updated record' where id=1 and t_stamp < '2024-05-16';
+
+=================================================================
+DELETE
+
+explain analyze
+delete from t1 where t_stamp::date='2024-05-15' and t_stamp < '2024-05-15';
+
+=================================================================
+INSERT
+
+-- look what happens when inserting out of order
+insert into t1(id,t_stamp,payload) values(default,now()+'1 year'+'2 day','hello world');
+insert into t1(id,t_stamp,payload) values(default,now()+'1 year'+'1 day','hello world');
+insert into t1(id,t_stamp,payload) values(default,now()+'1 year','hello world');
+insert into t1(id,t_stamp,payload) values(default,now()+'6 months'+'2 day','hello world');
+insert into t1(id,t_stamp,payload) values(default,now()+'6 months'+'1 day','hello world');
+insert into t1(id,t_stamp,payload) values(default,now()+'6 months','hello world');
+
+select id,t_stamp from _timescaledb_internal._hyper_1_14_chunk;
+select id,t_stamp from _timescaledb_internal._hyper_1_15_chunk;
+
+
+-- note the PRIMARY KEY column order
+alter table t1 add primary key(t_stamp,id);
+
+select reorder_chunk('_timescaledb_internal._hyper_1_14_chunk', 't1_pkey');
+select reorder_chunk('_timescaledb_internal._hyper_1_15_chunk', 't1_pkey');
+
+select id,t_stamp from _timescaledb_internal._hyper_1_14_chunk;
+select id,t_stamp from _timescaledb_internal._hyper_1_15_chunk;
+

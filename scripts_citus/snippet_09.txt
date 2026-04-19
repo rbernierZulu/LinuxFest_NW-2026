@@ -1,0 +1,34 @@
+create table if not exists t1(id,qty)
+using heap as select (random()*10)::int, (random()*1000)::int from generate_series(1,10e6);
+
+create table if not exists t2(id,qty)
+using columnar as select (random()*10)::int, (random()*1000)::int from generate_series(1,10e6);
+
+===========================================================
+
+delete from t2 where id=5;
+
+update t2 set id=5;
+
+===========================================================
+
+create index on t2 using btree (id);
+
+create index on t2 using columnar (id);
+
+===========================================================
+
+-- create table “t3”
+select generate_series as id into t3 from generate_series(0,15);
+alter table t3 add primary key(id);
+
+-- works for our standard table t1
+alter table t1 add foreign key(id) references t3(id);
+
+-- fails with the columnar table t2
+alter table t2 add foreign key(id) references t3(generate_series);
+
+--works after converting table t1 from COLUMNAR to HEAP
+alter table t2 set access method heap;
+alter table t2 add foreign key(id) references t3(id);
+alter table t2 set access method columnar;

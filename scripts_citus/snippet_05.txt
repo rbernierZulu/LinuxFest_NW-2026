@@ -1,0 +1,4 @@
+select *
+    from pg_settings
+    where name~'citus'
+    order by 1,2;

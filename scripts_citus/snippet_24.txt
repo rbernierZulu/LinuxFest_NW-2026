@@ -1,0 +1,8 @@
+select shard_name, citus_table_type,
+       nodename, shard_size
+from citus_shards;
+
+-------------------------------------
+
+select nodeid,nodename,groupid,isactive from pg_dist_node order by 1;
+

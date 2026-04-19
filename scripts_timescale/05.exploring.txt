@@ -1,0 +1,29 @@
+
+=============================================================
+su - postgres -c psql
+
+create database ex01;
+\c ex01
+
+select * from pg_available_extension_versions() where name ~ 'timescale';
+
+show shared_preload_libraries;
+
+create extension timescaledb;
+=============================================================
+\setenv PAGER 'less -S'
+select proname, prosrc from pg_proc where probin ~ 'timescale' order by 1;
+=============================================================
+-- list of schemas in a timescale database
+\dn
+=============================================================
+set search_path=_timescaledb_cache, _timescaledb_catalog, _timescaledb_config,
+                _timescaledb_debug, _timescaledb_functions, _timescaledb_internal,
+                timescaledb_experimental, timescaledb_information;
+
+\df
+\dt
+=============================================================
+-- 43 runtime parameters are returned
+select * from pg_settings where name ~ 'timescale' order by 1,2;
+

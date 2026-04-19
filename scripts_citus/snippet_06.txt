@@ -1,0 +1,11 @@
+-- Time: 7628.612 ms (00:07.629)
+create table if not exists t1(id,qty)
+using heap
+as
+select (random()*10)::int, (random()*1000)::int from generate_series(1,10e6);
+
+-- Time:15635.768 ms (00:15.636)
+create table if not exists t2(id,qty)
+using columnar
+as
+select (random()*10)::int, (random()*1000)::int from generate_series(1,10e6);

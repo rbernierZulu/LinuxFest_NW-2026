@@ -1,0 +1,48 @@
+# EXECUTE ON COORDINATOR NODE
+# lxc exec citus-coord -- su postgres -
+
+# purge the previous scenario
+psql -h citus-coord db01 <<_eof_
+
+-- remove the distributed table
+    drop table if exists myevents2x;
+
+-- remove all active worker nodes
+    select * from citus_remove_node('citus1',5432);
+    select * from citus_remove_node('citus2',5432);
+    select * from citus_remove_node('citus3',5432);
+    select * from citus_remove_node('citus4',5432);
+
+-- validate;there shouldn’t be any active worker nodes
+    select * from master_get_active_worker_nodes() order by 1;
+
+-- reset the replication factor from 2x to 1x
+    alter system set citus.shard_replication_factor=1;
+    select pg_reload_conf();
+_eof_
+
+======================================================================
+
+# drop db01
+for u in citus-coord citus1 citus2 citus3 citus4
+do
+    echo "=== $u ===="
+    psql "host=$u user=postgres password=postgres dbname=db01"<<_eof_
+        drop extension if exists citus cascade;
+       \c postgres
+        drop database if exists db01;
+_eof_
+done
+
+# create pgbench database
+for u in citus-coord citus1 citus2 citus3 citus4
+do
+    echo "=== $u ===="
+    psql "host=$u user=postgres password=postgres dbname=postgres" <<_eof_
+        create database pgbench;
+       \c pgbench
+        drop extension if exists citus cascade;
+        create extension citus;
+_eof_
+done
+

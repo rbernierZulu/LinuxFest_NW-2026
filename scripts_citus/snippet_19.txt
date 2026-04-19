@@ -1,0 +1,24 @@
+
+
+psql -h citus-coord pgbench <<_eof1_
+    select citus_set_coordinator_host('citus-coord', 5432);
+    select citus_add_node('citus1', 5432);
+_eof1_
+
+pgbench -h citus-coord -iI t pgbench
+
+psql -h citus-coord pgbench -c '\dt+'
+
+
+# distributes the pgbench tables across node citus1
+psql -h citus-coord pgbench <<_eof1_
+    BEGIN;
+        select create_distributed_table('pgbench_history', 'aid');
+        select create_distributed_table('pgbench_accounts', 'aid');
+        select create_distributed_table('pgbench_branches', 'bid');
+        select create_distributed_table('pgbench_tellers', 'tid');
+    COMMIT;
+_eof1_
+
+# populate the tables
+pgbench -h citus-coord -iI g -s 300 pgbench

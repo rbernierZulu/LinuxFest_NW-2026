@@ -1,0 +1,15 @@
+-- login psql
+
+create database db01
+\c db01
+
+select *
+    from pg_available_extension_versions()
+    where name~'^citus'
+    order by 1,2;
+
+show shared_preload_libraries;
+
+create extension citus;
+
+select * from pg_extension;

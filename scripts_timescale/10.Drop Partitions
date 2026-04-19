@@ -1,0 +1,53 @@
+DROPPING PARTITIONS
+
+- Manual: explicitly dropping one or more partitions based upon its age
+- Retention Policy: On a per table basis
+
+REFERENCES:
+    https://docs.timescale.com/api/latest/hypertable/drop_chunks/
+    https://docs.timescale.com/api/latest/data-retention/add_retention_policy/
+
+================================================================
+EXAMPLE (login:ex01)
+
+ex01=# select show_chunks('t1');
+               show_chunks
+-----------------------------------------
+ _timescaledb_internal._hyper_1_1_chunk
+ _timescaledb_internal._hyper_1_2_chunk
+ _timescaledb_internal._hyper_1_3_chunk
+ _timescaledb_internal._hyper_1_4_chunk
+ _timescaledb_internal._hyper_1_5_chunk
+ _timescaledb_internal._hyper_1_6_chunk
+ _timescaledb_internal._hyper_1_7_chunk
+ _timescaledb_internal._hyper_1_8_chunk
+ _timescaledb_internal._hyper_1_9_chunk
+ _timescaledb_internal._hyper_1_10_chunk
+ _timescaledb_internal._hyper_1_11_chunk
+ _timescaledb_internal._hyper_1_12_chunk
+ _timescaledb_internal._hyper_1_13_chunk
+
+===================================================================
+
+ex01=# \d+ _timescaledb_internal._hyper_1_1_chunk
+                                                  Table "_timescaledb_internal._hyper_1_1_chunk"
+ Column  |           Type           | Collation | Nullable |            Default             | Storage  | Compression | Stats target | Description
+---------+--------------------------+-----------+----------+--------------------------------+----------+-------------+--------------+-------------
+ id      | bigint                   |           | not null | nextval('t1_id_seq'::regclass) | plain    |             |              |
+ t_stamp | timestamp with time zone |           | not null | now()                          | plain    |             |              |
+ payload | text                     |           |          |                                | extended |             |              |
+Indexes:
+    "_hyper_1_1_chunk_t1_t_stamp_idx" btree (t_stamp DESC)
+Check constraints:
+    "constraint_1" CHECK (t_stamp >= '2024-05-02 00:00:00+00'::timestamp with time zone AND t_stamp < '2024-05-09 00:00:00+00'::timestamp with time zone)
+Inherits: t1
+Access method: heap
+
+
+===================================================================
+
+begin;
+    select drop_chunks('t1', '2024-05-09'::date);
+    select show_chunks('t1');
+rollback;
+

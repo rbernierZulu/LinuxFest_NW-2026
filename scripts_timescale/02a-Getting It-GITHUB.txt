@@ -1,0 +1,31 @@
+
+##########################################################
+# CREATE CONTAINER
+incus launch images:ubuntu/noble pg1-tmp
+#
+##########################################################
+
+
+### GET ALL YOUR PACKAGES ###
+# execute the following as root
+#
+apt install -y postgresql-common
+/usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+
+apt update && apt upgrade -y
+apt-get -y install postgresql-17 postgresql-server-dev-17 cmake pkg-config git
+
+git clone https://github.com/timescale/timescaledb.git  && cd timescaledb
+
+# git branch -a
+git checkout remotes/origin/2.26.x
+
+### COMPILE AND INSTALL ###
+./bootstrap && cd build && make
+
+# as root: install into existing pg 17 binary path
+make install
+
+# can be used to package the extension
+# make install DESTDIR=$HOME/installdir/timescale-2.26
+

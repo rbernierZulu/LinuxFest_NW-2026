@@ -1,0 +1,35 @@
+# Execute as "postgres"
+lxc exec citus-coord -- su postgres -
+
+for u in citus1 citus2 citus3 citus4 citus-coord
+do
+    echo "=== $u ==="
+    dropdb -h $u -U postgres --if-exists db01
+    createdb -h $u -U postgres db01
+    psql -h $u -U postgres db01 -c 'create extension citus'
+done
+
+===========================================================
+# Update shard replication factor from 1X to 2X
+
+psql -h citus-coord db01 <<_eof_
+    select citus_set_coordinator_host('citus-coord', 5432);
+
+-- this INSERT is non-standard but it makes it easy to see the shards
+    insert into pg_dist_node(nodename)
+    values ('citus1')
+          ,('citus2')
+          ,('citus3')
+          ,('citus4');
+
+    alter system set citus.shard_replication_factor=2;
+    select pg_reload_conf();
+_eof_
+===========================================================
+# validate
+psql -h citus-coord db01 <<_eof_
+    show citus.shard_replication_factor;
+    select nodeid,nodename,groupid,isactive from pg_dist_node order by 1;
+_eof_
+===========================================================
+

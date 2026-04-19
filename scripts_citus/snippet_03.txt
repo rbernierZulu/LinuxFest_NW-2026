@@ -1,0 +1,8 @@
+select proname, prosrc
+    from pg_proc
+    where probin ~ 'citus'
+    order by 1;
+
+set search_path=citus,citus_internal,columnar,columnar_internal;
+
+db01=# \df

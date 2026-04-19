@@ -1,0 +1,11 @@
+# execute on citus1
+systemctl start postgresql@16-main
+
+# execute on citus2
+systemctl stop postgresql@16-main
+
+
+psql -h citus-coord -U postgres db01 <<_eof_
+    select * from myevents2x where device_id=36 and event_id in (36,136,236) order by 1,2;
+_eof_
+

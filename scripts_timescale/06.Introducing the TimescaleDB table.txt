@@ -1,0 +1,17 @@
+
+================================================================
+# Populating A HyperTable
+
+\d
+select show_chunks('t1');
+select * from pg_size_pretty(hypertable_size('t1'));
+
+================================================================
+# Understanding HyperTable Chunks
+
+\d+ t1
+\d _timescaledb_internal._hyper_1_1_chunk
+\dt+
+\di+
+\di+ _timescaledb_internal.*_hyper_*
+================================================================

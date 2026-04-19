@@ -1,0 +1,17 @@
+### CONFIGURE THE REPOSITORY ###
+echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+
+# all requisite packages present in $HOME (/root) directory
+apt-get update && apt-get upgrade -y
+apt-get install -y $HOME/*.deb
+
+# configuration
+pg_conftool 17 main set shared_preload_libraries 'timescaledb' && \
+pg_conftool 17 main set listen_addresses '*' && \
+systemctl restart postgresql@17-main
+
+# confirmation
+pg_lsclusters
+netstat -tlnp
+

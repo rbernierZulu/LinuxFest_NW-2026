@@ -1,0 +1,10 @@
+### DETERMINING OPTIMAL RUNTIME PARAMETERS ###
+/usr/bin/timescaledb-tune --help 2>& 1>/dev/stdout | less
+
+
+# UPDATE CONFIGURATION
+/usr/bin/timescaledb-tune \
+--conf-path /var/lib/postgresql/17/main/postgresql.auto.conf \
+-pg-version 17 \
+-quiet \
+-yes

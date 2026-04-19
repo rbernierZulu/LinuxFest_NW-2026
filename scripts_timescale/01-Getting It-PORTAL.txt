@@ -1,0 +1,22 @@
+# CONFIGURE PG REPOSITORY
+apt install -y postgresql-common
+/usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+
+# INSTALL THE SERVER
+apt update && apt upgrade -y
+apt install -y postgresql-17-timescaledb
+
+# optional, nice to have ...
+apt -y install net-tools mc locate man-db wget curl gnupg2 tree
+
+# CONFIGURE POSTGRES
+pg_conftool 17 main set wal_level 'logical'
+pg_conftool 17 main set listen_addresses '*'
+pg_conftool 17 main set shared_preload_libraries 'timescaledb'
+
+# OPTIONAL
+echo manual > /etc/postgresql/17/main/start.conf
+
+# RESTART SERVER
+systemctl restart postgresql@17-main
+

@@ -1,0 +1,8 @@
+# execute the following on host citus-coord
+for u in citus1 citus2
+do
+    SHARD="myevents2x_102020"
+    SQL="select * from $SHARD order by 1,2 limit 3"
+    echo "==== host:$u, shard:$SHARD ===="
+    psql -h $u -U postgres db01 -c "$SQL"
+done | less -S

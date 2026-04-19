@@ -1,0 +1,24 @@
+# execute on host:citus-coord, database db01
+
+psql 'host=citus-coord dbname=db01 user=postgres' <<_eof_
+
+create table myevents2x (
+    device_id bigint,
+    event_id bigserial,
+    event_time timestamptz default now(),
+    data jsonb not null,
+    primary key (device_id, event_id)
+);
+
+-- distribute the events among the nodes
+select create_distributed_table('myevents2x', 'device_id');
+
+-- confirm table has been added across the cluster
+select * from master_get_active_worker_nodes() order by 1;
+
+-- populate the table
+insert into myevents2x (device_id, data)
+    select s % 100, ('{"measurement":'||random()||'}')::jsonb
+    from generate_series(1,1000000) s;
+
+_eof_

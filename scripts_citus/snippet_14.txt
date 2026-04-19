@@ -1,0 +1,4 @@
+
+psql 'host=citus-coord dbname=db01 user=postgres' <<_eof_
+    select * from myevents2x where device_id=36 and event_id in (36,136,236) order by 1,2;
+_eof_

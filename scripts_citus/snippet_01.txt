@@ -1,0 +1,15 @@
+# CONFIGURE REPOSITORY
+curl https://install.citusdata.com/community/deb.sh | sudo bash
+apt-get update && apt-get upgrade -y
+
+# INSTALL THE SERVER
+apt install -y postgresql-17-citus-14.0
+
+# INSTALL CITUS MODULE
+pg_conftool 17 main set shared_preload_libraries 'citus'
+
+# CONFIGURE POSTGRES
+pg_conftool 16 main set wal_level 'logical'
+pg_conftool 16 main set listen_addresses '*'
+systemctl restart postgresql@16-main
+pg_lsclusters

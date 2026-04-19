@@ -1,0 +1,11 @@
+
+
+pgbench -h citus-coord -iI p pgbench
+
+
+# inspect tables
+for u in citus-coord citus1
+do
+    echo "============= $u ============="
+    psql -h $u -U postgres pgbench <<<"\d pgbench_*"
+done | less -S

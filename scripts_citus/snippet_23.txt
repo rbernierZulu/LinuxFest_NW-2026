@@ -1,0 +1,38 @@
+-- EXECUTE ON COORDINATOR NODE
+
+-- DROP TABLES
+drop table if exists pgbench_accounts,pgbench_branches,
+                     pgbench_history,pgbench_tellers;
+
+-- ADD node
+select citus_add_node('citus3', 5432);
+
+====================================
+
+Create Reference & Distributed Tables Across Cluster
+
+-- create new tables
+create table t1(id serial primary key, comment text);
+
+create table t2 (
+    id serial primary key,
+    t1_fk int references t1(id) default (random()*1000)::int%4
+);
+
+select create_reference_table('t1');
+
+select create_distributed_table('t2', 'id');
+
+====================================
+
+-- DATA POPULATION
+-- insert records into tables t1, t2, in database pgbench
+
+insert into t1
+values (0,'apple')
+      ,(1,'oranges')
+      ,(2,'pineapple')
+      ,(3,'strawberry');
+
+insert into t2 (select * from generate_series(1,1E6)t1);
+
